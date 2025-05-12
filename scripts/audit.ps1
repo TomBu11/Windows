@@ -696,7 +696,7 @@ catch {
 }
 $disk1Size = "$([math]::Round($PhysicalDisks[0].Size / 1GB))GB"
 $disk1Type = "$($PhysicalDisks[0].MediaType) $($PhysicalDisks[0].BusType)"
-if ($PhysicalDisks.Count -gt 1) { 
+if ($PhysicalDisks.Count -gt 1) {
   $disk2Size = "$([math]::Round($PhysicalDisks[1].Size / 1GB))GB"
   $disk2Type = "$($PhysicalDisks[1].MediaType) $($PhysicalDisks[1].BusType)"
 }
@@ -717,7 +717,7 @@ if ($physicalDisks.Count -gt 2) {
 
 <# BRUTE FORCE PROTECTION #>
 
-Write-Host "`n=== Running brute force commands ===`n" -ForegroundColor DarkYellow 
+Write-Host "`n=== Running brute force commands ===`n" -ForegroundColor DarkYellow
 net accounts /lockoutthreshold:10
 net accounts /lockoutwindow:5
 net accounts /lockoutduration:30
@@ -726,7 +726,7 @@ net accounts /lockoutduration:30
 <# TEAMVIEWER #>
 
 if (-not $TeamViewerInfo) {
-  Write-Host "`n=== Checking Teamviewer ===`n" -ForegroundColor DarkYellow 
+  Write-Host "`n=== Checking Teamviewer ===`n" -ForegroundColor DarkYellow
   Write-Host "TeamViewer not installed" -ForegroundColor Red
   if ($AuditMode -eq "UNATTEND" -or (Read-Y "Install TeamViewer?")) {
     $teamviewerInstaller = Join-Path -Path $rocksaltPath -ChildPath "TeamViewer_Host_Setup.exe"
@@ -755,7 +755,7 @@ if (-not $TeamViewerInfo) {
 
 <# ROCKSALT USER #>
 
-Write-Host "`n=== Checking for Rocksalt User ===`n" -ForegroundColor DarkYellow 
+Write-Host "`n=== Checking for Rocksalt User ===`n" -ForegroundColor DarkYellow
 
 if ($Admins -contains "$computerName\Rocksalt") {
   Write-Host "Local Rocksalt user exits and is administrator"
@@ -787,7 +787,7 @@ else {
 
 <# WINDOWS 11 COMPATIBLE #>
 
-Write-Host "`n=== Checking Windows 11 compatibility ===`n" -ForegroundColor DarkYellow 
+Write-Host "`n=== Checking Windows 11 compatibility ===`n" -ForegroundColor DarkYellow
 
 $onWin11 = $os -match "11"
 
