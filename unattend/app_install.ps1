@@ -1,28 +1,28 @@
-$rootDirectory = "C:\Rocksalt"
+$rocksaltPath = "C:\Rocksalt"
+
+Write-Host "Installing TeamViewer..."
+$teamviewerInstaller = Join-Path -Path $rocksaltPath -ChildPath "TeamViewer_Host_Setup.exe"
+
+# Download TeamViewer
+Invoke-WebRequest -Uri "https://customdesignservice.teamviewer.com/download/windows/v15/65v9fp5/TeamViewer_Host_Setup.exe" -OutFile $teamviewerInstaller
+if (!$?) {
+  Write-Host "Failed to download TeamViewer installer" -ForegroundColor Red
+  return $null
+}
+
+Write-Host "TeamViewer installer downloaded to $teamviewerInstaller"
 
 # Install TeamViewer silently
-Start-Process (Join-Path -Path $rootDirectory -ChildPath "TeamViewer_Host_Setup.exe") -ArgumentList "/S", "/ACCEPTEULA=1" -WindowStyle Hidden -Wait
-
-# Ensure Chocolatey is installed
-if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-  Write-Host "Chocolatey is not installed. Installing now..." -ForegroundColor Yellow
-  Set-ExecutionPolicy Bypass -Scope Process -Force
-  [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-  Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-  Write-Host "Chocolatey installed successfully." -ForegroundColor Green
+Start-Process $teamviewerInstaller -ArgumentList "/S", "/ACCEPTEULA=1" -WindowStyle Hidden -Wait
+if (!$?) {
+  Write-Host "Failed to install TeamViewer" -ForegroundColor Red
+  return $null
 }
 
-# Define the list of apps to install/update
-$apps = @("googlechrome", "7zip", "notepadplusplus", "foxitreader")
-
-# Install or update each app
-foreach ($app in $apps) {
-  Write-Host "Installing/updating $app..." -ForegroundColor Cyan
-  choco install $app -y --force
-}
+Write-Host "TeamViewer installed successfully"
 
 # Install all apps in the Installers folder
-$exeDirectory = Join-Path -Path $rootDirectory -ChildPath "Installers"
+$exeDirectory = Join-Path -Path $rocksaltPath -ChildPath "Installers"
 $exeFiles = Get-ChildItem -Path $exeDirectory -Filter "*.exe"
 
 foreach ($exe in $exeFiles) {

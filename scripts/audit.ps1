@@ -21,7 +21,7 @@ $hardwareReadinessScript = @'
 #=============================================================================================================================
 #
 # Script Name:     HardwareReadiness.ps1
-# Description:     Verifies the hardware compliance. Return code 0 for success. 
+# Description:     Verifies the hardware compliance. Return code 0 for success.
 #                  In case of failure, returns non zero error code along with error message.
 
 # This script is not supported under any Microsoft standard support program or service and is distributed under the MIT license
@@ -277,7 +277,7 @@ using System.Runtime.InteropServices;
 # Storage
 try {
     $osDrive = Get-WmiObject -Class Win32_OperatingSystem | Select-Object -Property SystemDrive
-    $osDriveSize = Get-WmiObject -Class Win32_LogicalDisk -filter "DeviceID='$($osDrive.SystemDrive)'" | Select-Object @{Name = "SizeGB"; Expression = { $_.Size / 1GB -as [int] } }  
+    $osDriveSize = Get-WmiObject -Class Win32_LogicalDisk -filter "DeviceID='$($osDrive.SystemDrive)'" | Select-Object @{Name = "SizeGB"; Expression = { $_.Size / 1GB -as [int] } }
 
     if ($null -eq $osDriveSize) {
         UpdateReturnCode -ReturnCode 1
@@ -532,21 +532,22 @@ else {
 
 function Get-CommandStatus {
   param (
-      [ScriptBlock]$Command,
-      [string]$Message
+    [ScriptBlock]$Command,
+    [string]$Message
   )
 
   try {
-      $CommandResult = & $Command
-      if ($?) {
-          Write-Host "Got $Message"
-      } else {
-          Write-Host "Failed to get $Message" -ForegroundColor Red
-      }
+    $CommandResult = & $Command
+    if ($?) {
+      Write-Host "Got $Message"
+    }
+    else {
+      Write-Host "Failed to get $Message" -ForegroundColor Red
+    }
   }
   catch {
-      Write-Host "Error while getting ${Message}: $_" -ForegroundColor Red
-      $CommandResult = $null  # In case of an error, return $null
+    Write-Host "Error while getting ${Message}: $_" -ForegroundColor Red
+    $CommandResult = $null  # In case of an error, return $null
   }
 
   return $CommandResult
@@ -666,10 +667,10 @@ $ComputerInfo = Get-CommandStatus -Command { Get-ComputerInfo } -Message 'comput
 $RamInfo = Get-CommandStatus -Command { Get-WmiObject -Class Win32_PhysicalMemory } -Message 'RAM'
 $Admins = Get-CommandStatus -Command { Get-LocalGroupMember -Group "Administrators" | Select-Object -ExpandProperty Name } -Message 'admins'
 $Users = Get-CommandStatus -Command { Get-LocalGroupMember -Group "Users" | Where-Object {
-  $Admins -notcontains $_.Name -and
-  $_.Name -notmatch "^NT AUTHORITY" -and
-  $_.Name -notmatch "^BUILTIN"
-} | Select-Object -ExpandProperty Name } -Message 'users'
+    $Admins -notcontains $_.Name -and
+    $_.Name -notmatch "^NT AUTHORITY" -and
+    $_.Name -notmatch "^BUILTIN"
+  } | Select-Object -ExpandProperty Name } -Message 'users'
 $TeamViewerInfo = Get-TeamViewerInfo
 $bitlocker = Get-CommandStatus -Command { Get-BitLockerVolume -MountPoint "C:" } -Message 'BitLocker'
 $PhysicalDisks = Get-CommandStatus -Command { Get-PhysicalDisk } -Message 'disks'
@@ -704,7 +705,6 @@ else {
   $disk2Size = "N/A"
   $disk2Type = "N/A"
 }
-$teamViewer = $TeamViewerInfo.ClientID
 $chromeVersion = ($InstalledSoftware | Where-Object { $_.DisplayName -eq "Google Chrome" }).DisplayVersion
 $firefoxVersion = ($InstalledSoftware | Where-Object { $_.DisplayName -eq "Mozilla Firefox" }).DisplayVersion
 $edgeVersion = ($InstalledSoftware | Where-Object { $_.DisplayName -eq "Microsoft Edge" }).DisplayVersion
@@ -725,32 +725,39 @@ net accounts /lockoutduration:30
 
 <# TEAMVIEWER #>
 
+function Install-TeamViewer {
+  Write-Host "Installing TeamViewer..."
+  $teamviewerInstaller = Join-Path -Path $rocksaltPath -ChildPath "TeamViewer_Host_Setup.exe"
+
+  # Download TeamViewer
+  Invoke-WebRequest -Uri "https://customdesignservice.teamviewer.com/download/windows/v15/65v9fp5/TeamViewer_Host_Setup.exe" -OutFile $teamviewerInstaller
+  if (!$?) {
+    Write-Host "Failed to download TeamViewer installer" -ForegroundColor Red
+    return $null
+  }
+
+  Write-Host "TeamViewer installer downloaded to $teamviewerInstaller"
+
+  # Install TeamViewer silently
+  Start-Process $teamviewerInstaller -ArgumentList "/S", "/ACCEPTEULA=1" -WindowStyle Hidden -Wait
+  if (!$?) {
+    Write-Host "Failed to install TeamViewer" -ForegroundColor Red
+    return $null
+  }
+
+  Write-Host "TeamViewer installed successfully"
+  return Get-TeamViewerInfo
+}
+
 if (-not $TeamViewerInfo) {
   Write-Host "`n=== Checking Teamviewer ===`n" -ForegroundColor DarkYellow
   Write-Host "TeamViewer not installed" -ForegroundColor Red
   if ($AuditMode -eq "UNATTEND" -or (Read-Y "Install TeamViewer?")) {
-    $teamviewerInstaller = Join-Path -Path $rocksaltPath -ChildPath "TeamViewer_Host_Setup.exe"
-    # Download TeamViewer
-    Invoke-WebRequest -Uri "https://rocksalt.cc/tv" -OutFile $teamviewerInstaller
-    if ($?) {
-      Write-Host "TeamViewer installer downloaded to $teamviewerInstaller"
-
-      # Install TeamViewer silently
-      Start-Process $teamviewerInstaller -ArgumentList "/S", "/ACCEPTEULA=1" -WindowStyle Hidden -Wait
-
-      if ($?) {
-        Write-Host "TeamViewer installed successfully"
-        $TeamViewerInfo = Get-TeamViewerInfo
-      }
-      else {
-        Write-Host "Failed to install TeamViewer" -ForegroundColor Red
-      }
-    }
-    else {
-      Write-Host "Failed to download TeamViewer installer" -ForegroundColor Red
-    }
+    $TeamViewerInfo = Install-TeamViewer
   }
 }
+
+$teamViewer = $TeamViewerInfo.ClientID
 
 
 <# ROCKSALT USER #>
