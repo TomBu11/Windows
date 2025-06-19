@@ -1,3 +1,5 @@
+#Requires -RunAsAdministrator
+
 $Username = Read-Host "Enter Username"
 $Password = Read-Host -AsSecureString "Enter Password"
 
