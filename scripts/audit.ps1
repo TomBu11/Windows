@@ -15,7 +15,7 @@ param (
   [string]$softwareValid = "UNATTEND"
 )
 
-Write-Host "Audit script version 1.0.3`n" -ForegroundColor Green
+Write-Host "Audit script version 1.0.4`n" -ForegroundColor Green
 
 $hardwareReadinessScript = @'
 #=============================================================================================================================
