@@ -15,7 +15,7 @@ param (
   [string]$softwareValid = "UNATTEND"
 )
 
-Write-Host "Audit script version 1.0.4`n" -ForegroundColor Green
+Write-Host "Audit script version 1.0.5`n" -ForegroundColor Green
 
 $hardwareReadinessScript = @'
 #=============================================================================================================================
@@ -665,12 +665,12 @@ Write-Host "`n=== Getting system information ===`n" -ForegroundColor DarkYellow
 $ComputerName = $env:COMPUTERNAME
 $ComputerInfo = Get-CommandStatus -Command { Get-ComputerInfo } -Message 'computer info'
 $RamInfo = Get-CommandStatus -Command { Get-WmiObject -Class Win32_PhysicalMemory } -Message 'RAM'
-$Admins = Get-CommandStatus -Command { Get-LocalGroupMember -Group "Administrators" | Select-Object -ExpandProperty Name } -Message 'admins'
-$Users = Get-CommandStatus -Command { Get-LocalGroupMember -Group "Users" | Where-Object {
-    $Admins -notcontains $_.Name -and
-    $_.Name -notmatch "^NT AUTHORITY" -and
-    $_.Name -notmatch "^BUILTIN"
-  } | Select-Object -ExpandProperty Name } -Message 'users'
+$Admins = @( Get-CommandStatus -Command { Get-LocalGroupMember -Group "Administrators" | Select-Object -ExpandProperty Name } -Message 'admins' )
+$Users = @( Get-CommandStatus -Command { Get-LocalGroupMember -Group "Users" | Where-Object {
+      $Admins -notcontains $_.Name -and
+      $_.Name -notmatch "^NT AUTHORITY" -and
+      $_.Name -notmatch "^BUILTIN"
+    } | Select-Object -ExpandProperty Name } -Message 'users' )
 $TeamViewerInfo = Get-TeamViewerInfo
 $bitlocker = Get-CommandStatus -Command { Get-BitLockerVolume -MountPoint "C:" } -Message 'BitLocker'
 $PhysicalDisks = Get-CommandStatus -Command { Get-PhysicalDisk } -Message 'disks'
@@ -829,10 +829,24 @@ if ($AuditMode -ne "UNATTEND") {
   $updates = Read-No "Updates"
   $drivers = Read-No "Drivers"
   $antiVirus = Read-No "Antivirus"
-  Write-Host "Admin Accounts: $Admins"
-  $clientAdmin = Read-Host "Client Admin"
-  Write-Host "User Accounts: $Users"
-  $userName = Read-Host "Username (Account they use)"
+
+  Write-Host "`nClient Admin:"
+  for ($i = 0; $i -lt $Admins.Count; $i++) {
+    Write-Host " [$($i + 1)] $($Admins[$i])"
+  }
+  $clientAdmin = Read-Host "Enter number or custom"
+  if ($clientAdmin -as [int] -and $clientAdmin -gt 0 -and $clientAdmin -le $Admins.Count) {
+    $clientAdmin = $Admins[$clientAdmin - 1]
+  }
+
+  Write-Host "`nUsername (Account they use):"
+  for ($i = 0; $i -lt $Users.Count; $i++) {
+    Write-Host " [$($i + 1)] $($Users[$i])"
+  }
+  $userName = Read-Host "Enter number or custom"
+  if ($userName -as [int] -and $userName -gt 0 -and $userName -le $Users.Count) {
+    $userName = $Users[$userName - 1]
+  }
 
   Write-Host "`nChrome version: $chromeVersion`nFirefox version: $firefoxVersion`nEdge version: $edgeVersion"
 
