@@ -15,7 +15,7 @@ param (
   [string]$softwareValid = "UNATTEND"
 )
 
-Write-Host "Audit script version 1.0.5`n" -ForegroundColor Green
+Write-Host "Audit script version 1.0.6`n" -ForegroundColor Green
 
 $hardwareReadinessScript = @'
 #=============================================================================================================================
@@ -731,9 +731,15 @@ function Install-TeamViewer {
 
   # Download TeamViewer
   Invoke-WebRequest -Uri "https://customdesignservice.teamviewer.com/download/windows/v15/65v9fp5/TeamViewer_Host_Setup.exe" -OutFile $teamviewerInstaller
-  if (!$?) {
-    Write-Host "Failed to download TeamViewer installer" -ForegroundColor Red
-    return $null
+  if (-not (Test-Path $teamviewerInstaller) -or ((Get-Item $teamviewerInstaller).Length -lt 1MB)) {
+    Write-Host "Failed to download Rocksalt teamviwer installer" -ForegroundColor DarkYellow
+    Write-Host "Trying generic download link..."
+    Invoke-WebRequest -Uri "https://download.teamviewer.com/download/TeamViewer_Host_Setup.exe" -OutFile $teamviewerInstaller
+
+    if (-not (Test-Path $teamviewerInstaller) -or ((Get-Item $teamviewerInstaller).Length -lt 1MB)) {
+      Write-Host "Failed to download teamviewer from generic link" -ForegroundColor Red
+      return $null
+    }
   }
 
   Write-Host "TeamViewer installer downloaded to $teamviewerInstaller"
