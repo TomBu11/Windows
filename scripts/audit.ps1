@@ -530,6 +530,13 @@ else {
 
 <# HELPER FUNCTIONS #>
 
+function Write-Error {
+  param (
+    [string]$Message
+  )
+  Write-Host $Message -ForegroundColor Red
+}
+
 function Get-CommandStatus {
   param (
     [ScriptBlock]$Command,
@@ -542,11 +549,11 @@ function Get-CommandStatus {
       Write-Host "Got $Message"
     }
     else {
-      Write-Host "Failed to get $Message" -ForegroundColor Red
+      Write-Error "Failed to get $Message"
     }
   }
   catch {
-    Write-Host "Error while getting ${Message}: $_" -ForegroundColor Red
+    Write-Error "Error while getting ${Message}: $_"
     $CommandResult = $null  # In case of an error, return $null
   }
 
@@ -737,7 +744,7 @@ function Install-TeamViewer {
     Invoke-WebRequest -Uri "https://download.teamviewer.com/download/TeamViewer_Host_Setup.exe" -OutFile $teamviewerInstaller
 
     if (-not (Test-Path $teamviewerInstaller) -or ((Get-Item $teamviewerInstaller).Length -lt 1MB)) {
-      Write-Host "Failed to download teamviewer from generic link" -ForegroundColor Red
+      Write-Error "Failed to download teamviewer from generic link"
       return $null
     }
   }
@@ -747,7 +754,7 @@ function Install-TeamViewer {
   # Install TeamViewer silently
   Start-Process $teamviewerInstaller -ArgumentList "/S", "/ACCEPTEULA=1" -WindowStyle Hidden -Wait
   if (!$?) {
-    Write-Host "Failed to install TeamViewer" -ForegroundColor Red
+    Write-Error "Failed to install TeamViewer"
     return $null
   }
 
@@ -757,7 +764,7 @@ function Install-TeamViewer {
 
 if (-not $TeamViewerInfo) {
   Write-Host "`n=== Checking Teamviewer ===`n" -ForegroundColor DarkYellow
-  Write-Host "TeamViewer not installed" -ForegroundColor Red
+  Write-Error "TeamViewer not installed"
   if ($AuditMode -eq "UNATTEND" -or (Read-Y "Install TeamViewer?")) {
     $TeamViewerInfo = Install-TeamViewer
   }
@@ -780,7 +787,7 @@ elseif ($Admins -match '\\Rocksalt$') {
   $rocksaltExists = Add-RocksaltUser
 }
 elseif (Get-LocalUser -Name "Rocksalt" -ErrorAction SilentlyContinue) {
-  Write-Host "Local Rocksalt user is not administrator" -ForegroundColor Red
+  Write-Error "Local Rocksalt user is not administrator"
 
   if ($AuditMode -eq "UNATTEND" -or (Read-Y "Make Rocksalt admin?")) {
     Add-LocalGroupMember -Group "Administrators" -Member "Rocksalt"
@@ -792,7 +799,7 @@ elseif (Get-LocalUser -Name "Rocksalt" -ErrorAction SilentlyContinue) {
   }
 }
 else {
-  Write-Host "Local Rocksalt user does not exist" -ForegroundColor Red
+  Write-Error "Local Rocksalt user does not exist"
 
   $rocksaltExists = Add-RocksaltUser
 }
@@ -809,13 +816,13 @@ if ($HardwareReadiness.returnResult -eq "CAPABLE") {
   $win11Comp = "Yes"
 
   if (-not $onWin11) {
-    Write-Host "Windows 11 is not installed please update" -ForegroundColor Red
+    Write-Error "Windows 11 is not installed please update"
   }
 }
 else {
-  Write-Host "Not Windows 11 compatible" -ForegroundColor Red
+  Write-Error "Not Windows 11 compatible"
   $win11Comp = "No"
-  Write-Host "Reason: $($HardwareReadiness.returnReason)" -ForegroundColor Red
+  Write-Error "Reason: $($HardwareReadiness.returnReason)"
 
   if ($onWin11) {
     Write-Host "Warning: Windows 11 is installed but not compatible" -ForegroundColor Yellow
@@ -889,7 +896,7 @@ if ($bitlocker.ProtectionStatus -eq 1) {
   $bitlockerInfo = "$($protector.KeyProtectorId)`n$($protector.RecoveryPassword)"
 }
 else {
-  Write-Host "Bitlocker is not enabled" -ForegroundColor Red
+  Write-Error "Bitlocker is not enabled"
   $bitlockerOn = "No"
 }
 
@@ -973,7 +980,7 @@ foreach ($path in $outPaths) {
       break
     }
     else {
-      Write-Host "Failed to save Bitlocker info to $bitlockerFile`n" -ForegroundColor Red
+      Write-Error "Failed to save Bitlocker info to $bitlockerFile`n"
     }
   }
 }
