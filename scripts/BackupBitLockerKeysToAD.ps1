@@ -1,5 +1,7 @@
 ﻿#Requires -RunAsAdministrator
 
+$outPath = "C:\Rocksalt"
+
 Get-BitLockerVolume | Where-Object { $_.ProtectionStatus -eq "On" } | ForEach-Object {
   $MountPoint = $_.MountPoint
   $_.KeyProtector | Where-Object { $_.KeyProtectorType -eq "RecoveryPassword" } | ForEach-Object {
@@ -7,4 +9,8 @@ Get-BitLockerVolume | Where-Object { $_.ProtectionStatus -eq "On" } | ForEach-Ob
   }
 }
 
-Add-Content -Path "C:\Rocksalt\Bitlocker_Backup_Log.txt" -Value "$(Get-Date) : $env:USERNAME"
+if (-not (Test-Path -Path $outPath)) {
+  New-Item -ItemType Directory -Path $outPath | Out-Null
+}
+
+Add-Content -Path "$outPath\Bitlocker_Backup_Log.txt" -Value "$(Get-Date) : $env:USERNAME"
